@@ -1,43 +1,51 @@
-# FlowVentry - Inventory Management System
+# FlowVentry - Inventory Management (Next.js + MongoDB)
 
 ![Alt text](banner.png)
 
+FlowVentry is a minimal, full‑stack inventory app built with Next.js App Router, MongoDB Atlas, and modern UI patterns. Deployed on Vercel, it isdesigned to efficiently manage, track, and organize a business’s inventory to monitor stock levels, manage product details, and generate reports to make informed decisions.
+
+## Features
+
+- Add, list, and update products (CRUD).
+- Live search using MongoDB text indexes.
+- Instant quantity +/− with UI revalidation.
+- Clean, responsive UI with sticky table headers and zebra rows.
+- Modular Next.js API routes with clean JSON contracts.
+
+## Tech Stack
+
+- Next.js (App Router), React, Tailwind CSS  
+- MongoDB Atlas, MongoDB Node.js Driver  
+- Vercel (deployment), GitHub (CI/CD)
 
 
+## API Endpoints
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+- GET /api/product — list all products  
+- POST /api/product — add a product  
+  - body: { name: string, quantity: number, price: number }
+- GET /api/search?query=... — text search (name/quantity/price)  
+- POST /api/update — increment/decrement quantity  
+  - body: { action: "plus" | "minus", name: string, initialQuantity: number }
 
-## Getting Started
 
-First, run the development server:
+## Data Model
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```json
+{
+  "name": "T‑Shirt (Black)",
+  "quantity": 10,
+  "price": 15
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Text index (for demo search):
+```js
+db.inventory.createIndex({ name: "text", quantity: "text", price: "text" })
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Push to GitHub; connect repo to Vercel.  
+- Set MONGODB_URI and MONGODB_DB in Vercel Project Settings.  
+- Vercel handles builds and previews; promote to production from dashboard.
