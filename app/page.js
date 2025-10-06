@@ -1,103 +1,202 @@
-import Image from "next/image";
+"use client";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [productForm, setProductForm] = useState({});
+  const [products, setproducts] = useState([]);
+  const [alert, setAlert] = useState("");
+  const [query, setQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
+  const [dropdown, setDropdown] = useState([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // 🟢 Fetch products on initial load
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const response = await fetch("/api/product");
+      let rjson = await response.json();
+      setproducts(rjson.allProducts || []);
+    };
+    fetchProducts();
+  }, []);
+
+  // ➕ Add a new product
+  const addProduct = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productForm),
+      });
+
+      if (response.ok) {
+        console.log("Product added successfully");
+        setAlert("Your Product has been added!");
+        setProductForm({});
+      } else {
+        console.error("Error adding product");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  // ✏️ Handle form field changes
+  const handleChange = (e) => setProductForm({ ...productForm, [e.target.name]: e.target.value });
+
+  // 🔍 Handle dropdown search and show matched results
+  const onDropdownEdit = async (e) => {
+    const value = e.target.value;
+    setQuery(value);
+
+    if (!loading) {
+      setLoading(true);
+      setDropdown([]);
+      const response = await fetch("/api/search?query=" + encodeURIComponent(value));
+      const rjson = await response.json();
+      setDropdown(rjson.allProducts || []);
+      setLoading(false);
+    }
+  };
+
+  // 🔄 Handle plus/minus actions and update quantity in DB
+  const buttonAction = async (action, name, initialQuantity) => {
+    setLoadingAction(true);
+    const response = await fetch("/api/update/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, name, initialQuantity }),
+    });
+
+    let r = await response.json();
+    setLoadingAction(false);
+
+    // Refresh results for same search term
+    if (searchQuery.trim()) {
+      const refresh = await fetch("/api/search?query=" + encodeURIComponent(searchQuery));
+      const refreshedJson = await refresh.json();
+      setDropdown(refreshedJson.allProducts || []);
+    }
+  };
+
+  return (
+    <>
+      <Header />
+
+      {/* 🔍 Search Product Section */}
+      <div className="container mx-auto my-6 relative">
+        <div className="text-green-800 text-center">{alert}</div>
+        <h2 className="text-3xl font-semibold mb-3">Search a Product</h2>
+
+        <div className="flex mb-2">
+          <input
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              onDropdownEdit(e);
+            }}
+            type="text"
+            placeholder=" Enter a product name"
+            className="flex-1 border border-gray-300 bg-white px-4 py-2 rounded-md"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {(dropdown.length > 0 || loading) && (
+          <div className="dropcontainer w-[85vw] border-1 bg-green-300 rounded-md">
+            {loading && (
+              <div className="flex justify-center items-center py-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="w-16 h-16">
+                  <circle fill="#22c55e" stroke="#22c55e" strokeWidth="15" r="15" cx="40" cy="65">
+                    <animate attributeName="cy" calcMode="spline" dur="2s" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4s" />
+                  </circle>
+                  <circle fill="#22c55e" stroke="#22c55e" strokeWidth="15" r="15" cx="100" cy="65">
+                    <animate attributeName="cy" calcMode="spline" dur="2s" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2s" />
+                  </circle>
+                  <circle fill="#22c55e" stroke="#22c55e" strokeWidth="15" r="15" cx="160" cy="65">
+                    <animate attributeName="cy" calcMode="spline" dur="2s" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0s" />
+                  </circle>
+                </svg>
+              </div>
+            )}
+
+            {dropdown.map((item) => (
+              <div key={item.name} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 p-3 my-1">
+                <span className="font-semibold truncate">{item.name} (${item.price} per item)</span>
+                <button onClick={() => buttonAction("minus", item.name, item.quantity)} disabled={loadingAction} className="py-1 px-4 bg-green-600 text-white rounded-xl font-semibold disabled:bg-orange-200">-</button>
+                <span className="w-28 text-right"><b>Quantity: {String(item.quantity)}</b></span>
+                <button onClick={() => buttonAction("plus", item.name, item.quantity)} disabled={loadingAction} className="py-1 px-4 bg-green-600 text-white rounded-xl font-semibold disabled:bg-orange-200">+</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ➕ Add Product Form */}
+      <div className="container mx-auto mt-10">
+        <h2 className="text-3xl font-semibold">Add Product to Database</h2>
+        <span className="text-sm text-gray-500">Name, Quantity, and Price only</span>
+
+        <form className="space-y-4 p-4 rounded-xl border bg-white mt-3">
+          <div className="mb-4">
+            <label htmlFor="productName" className="block text-sm mb-1">Product Name</label>
+            <input value={productForm?.name || ""} name="name" type="text" id="productName" onChange={handleChange} className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-300" placeholder="e.g., T-Shirt (Black)" />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="quantity" className="block text-sm mb-1">Quantity</label>
+            <input value={productForm?.quantity || ""} name="quantity" type="number" id="quantity" onChange={handleChange} className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-300" placeholder="e.g., 10" />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="price" className="block text-sm mb-1">Price($)</label>
+            <input value={productForm?.price || ""} name="price" type="number" id="price" onChange={handleChange} className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-300" placeholder="e.g., 12.50" />
+          </div>
+
+          <button onClick={addProduct} type="submit" className="bg-green-600 hover:bg-green-500 text-white font-bold px-4 py-2 rounded-md">Add Product</button>
+        </form>
+      </div>
+
+      {/* 📦 Display Stock Table */}
+      <div className="container my-10 mx-auto">
+        <h2 className="text-3xl font-semibold mb-6">Current Stock</h2>
+
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+          <div className="max-h-[60vh] overflow-auto"></div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Product Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Quantity</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Price</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {products.map((product) => (
+                <tr key={product.name} className="odd:bg-white even:bg-gray-50 hover:bg-green-100">
+                  <td className="px-6 py-3 text-gray-900">{product.name}</td>
+                  <td className="px-6 py-3 text-gray-900">{product.quantity}</td>
+                  <td className="px-6 py-3 text-gray-900">${product.price}</td>
+                </tr>
+              ))}
+            </tbody>
+
+            <tfoot className="bg-gray-50 border-t-1">
+              <tr>
+                <td className="px-6 py-3 text-sm text-black-700"><b>Total items</b></td>
+                <td className="px-6 py-3 text-right font-mono"><b>{products.reduce((sum, p) => sum + Number(p.quantity || 0), 0)}</b></td>
+                <td className="px-6 py-3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <Footer />
+    </>
   );
 }
