@@ -2,7 +2,7 @@
 
 ![Alt text](banner.png)
 
-FlowVentry is a minimal, full‑stack inventory app built with Next.js App Router, MongoDB Atlas, and modern UI patterns. Deployed on Vercel, it isdesigned to efficiently manage, track, and organize a business’s inventory to monitor stock levels, manage product details, and generate reports to make informed decisions.
+FlowVentry is a minimal, full‑stack inventory app built with Next.js App Router, MongoDB Atlas, and modern UI patterns. Deployed on Vercel, it is designed to efficiently manage, track, and organize a business’s inventory to monitor stock levels, manage product details, and generate reports to make informed decisions.
 
 ## Features
 
